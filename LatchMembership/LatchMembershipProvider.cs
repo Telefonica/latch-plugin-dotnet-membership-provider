@@ -399,9 +399,9 @@ namespace LatchMembership
                     if (statusResponse.Data != null && statusResponse.Data.ContainsKey("operations"))
                     {
                         var operations = (Dictionary<string, object>)statusResponse.Data["operations"];
-                        if (operations.ContainsKey(this.appId))
+                        if (operations.ContainsKey(this.loginOperation))
                         {
-                            var app = (Dictionary<string, object>)operations[this.appId];
+                            var app = (Dictionary<string, object>)operations[this.loginOperation];
                             if (app.ContainsKey("status"))
                             {
                                 string status = app["status"].ToString().ToLower();
