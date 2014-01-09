@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LatchSDK">
+      <HintPath>bin\Release\LatchSDK.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -56,12 +59,6 @@
     <Compile Include="SecondFactorEventArgs.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Latch\LatchSDK.csproj">
-      <Project>{251d2db5-3bd6-45bd-9704-ce7167627786}</Project>
-      <Name>LatchSDK</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="LatchDefaultStorage.xsc">
       <DependentUpon>LatchDefaultStorage.xsd</DependentUpon>
     </None>
@@ -73,9 +70,6 @@
     <None Include="LatchDefaultStorage.xss">
       <DependentUpon>LatchDefaultStorage.xsd</DependentUpon>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
