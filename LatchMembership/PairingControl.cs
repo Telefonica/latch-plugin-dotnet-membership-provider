@@ -18,10 +18,7 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Web;
 using System.Web.Security;
 using System.Web.UI;
@@ -34,7 +31,6 @@ namespace LatchMembership.UI
     public class PairingControl : CompositeControl
     {
         private MultiView pairingMultiView;
-        private Label accountIdLabel;
         private TextBox pairingTokenTextBox;
 
         private enum Views
@@ -59,11 +55,9 @@ namespace LatchMembership.UI
             anonymousView.Controls.Add(new Literal() { Text = "You are not logged in. Please login to manage your account pairing." });
             pairingMultiView.Views.Add(anonymousView);
 
+
             View pairedView = new View() { ID = "PairedView" };
-            pairedView.Controls.Add(new Literal() { Text = "Account ID: " });
-            accountIdLabel = new Label() { ID = "AccountIdLabel" };
-            accountIdLabel.Font.Bold = true;
-            pairedView.Controls.Add(accountIdLabel);
+
             Button unpairButton = new Button() { ID = "UnpairButton", Text = "Unpair" };
             unpairButton.Click += new EventHandler(UnpairButton_Click);
             pairedView.Controls.Add(new Literal() { Text = " " });
@@ -73,6 +67,7 @@ namespace LatchMembership.UI
             View unpairedView = new View() { ID = "UnpairedView" };
             unpairedView.Controls.Add(new Literal() { Text = "Pairing token: " });
             pairingTokenTextBox = new TextBox() { ID = "PairingTokenTextBox" };
+            pairingTokenTextBox.MaxLength = 6;
             unpairedView.Controls.Add(pairingTokenTextBox);
             Button pairButton = new Button() { ID = "PairButton", Text = "Pair" };
             pairButton.Click += new EventHandler(PairButton_Click);
@@ -96,33 +91,56 @@ namespace LatchMembership.UI
             }
         }
 
-
         private void UnpairButton_Click(object sender, EventArgs e)
         {
-            var user = HttpContext.Current.User;
-
-            if (user != null)
-            {
-                (Membership.Provider as LatchMembership.LatchMembershipProvider).UnpairAccount(user.Identity.Name);
-            }
-
-            Refresh();
+            UnpairAccount();
         }
 
 
         private void PairButton_Click(object sender, EventArgs e)
         {
-            var user = HttpContext.Current.User;
-            string token = pairingTokenTextBox.Text.Trim();
+            PairAccount();
+        }
 
-            pairingTokenTextBox.Text = string.Empty;
-
-            if (user != null && !string.IsNullOrEmpty(token))
+        protected virtual void PairAccount()
+        {
+            try
             {
-                (Membership.Provider as LatchMembership.LatchMembershipProvider).PairAccount(user.Identity.Name, token);
-            }
+                var user = HttpContext.Current.User;
+                string token = pairingTokenTextBox.Text.Trim();
 
-            Refresh();
+                pairingTokenTextBox.Text = string.Empty;
+
+                if (user != null && !string.IsNullOrEmpty(token))
+                {
+                    (Membership.Provider as LatchMembership.LatchMembershipProvider).PairAccount(user.Identity.Name, token);
+                }
+
+                Refresh();
+            }
+            catch (ApplicationException)
+            {
+                this.Controls.Add(new Literal() { Text = "<b>Has been an error pairing your account with Latch, check your token syntax.</b>" });
+            }
+        }
+
+        protected virtual void UnpairAccount()
+        {
+            try
+            {
+                var user = HttpContext.Current.User;
+
+                if (user != null)
+                {
+                    (Membership.Provider as LatchMembership.LatchMembershipProvider).UnpairAccount(user.Identity.Name);
+                }
+
+                Refresh();
+            }
+            catch (ApplicationException)
+            {
+                this.Controls.Add(new Literal() { Text = "<b>Has been an error unpairing your account, check if you are already unpaired.</b>" });
+            }
         }
 
         private void Refresh()
@@ -143,18 +161,14 @@ namespace LatchMembership.UI
                 if (string.IsNullOrEmpty(accountId))
                 {
                     pairingMultiView.ActiveViewIndex = (int)Views.NotPaired;
-                    accountIdLabel.Text = string.Empty;
                     pairingTokenTextBox.Text = string.Empty;
                 }
                 else
                 {
                     pairingMultiView.ActiveViewIndex = (int)Views.Paired;
-                    accountIdLabel.Text = accountId;
                     pairingTokenTextBox.Text = string.Empty;
                 }
             }
         }
-
-
     }
 }
