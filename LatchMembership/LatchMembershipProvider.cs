@@ -25,6 +25,7 @@ using System.Web.Security;
 using System.Web.Profile;
 using System.Web;
 using System.IO;
+using System.Data;
 
 namespace LatchMembership
 {
@@ -240,7 +241,7 @@ namespace LatchMembership
             }
 
             this.loginOperation = string.IsNullOrEmpty(latchConfig.LoginOperation) ? appId : latchConfig.LoginOperation;
-            
+
             this.defaultStorageXmlFile = Path.Combine(System.Web.Hosting.HostingEnvironment.ApplicationPhysicalPath, latchConfig.DefaultStorageXmlFile);
 
             this.latchAPI = new LatchSDK.Latch(this.appId, this.appSecret);
@@ -301,6 +302,24 @@ namespace LatchMembership
                 throw new ArgumentException("Invalid username");
             }
             return GetUserAccountId(user);
+        }
+
+        /// <summary>
+        /// Gets the Rows from the LatchDefaultStorage which contains the given accountId.
+        /// </summary>
+        /// <param name="accountId">The accountId to search for in the xml file.</param>
+        /// <returns>the rows found in the LatchDefaultStorage dataset.</returns>
+        public DataRow[] FindPairingInfoByAccountId(string accountId)
+        {
+            DataTable dt = defaultStorage.Tables[0];
+            if (dt.Rows.Count > 0 && accountId.All(char.IsLetterOrDigit))
+            {
+                var pairingInfo = dt.Select("AccountId = '" + accountId + "'");
+
+                return pairingInfo;
+            }
+            else
+                return null;
         }
 
         /// <summary>
@@ -367,14 +386,20 @@ namespace LatchMembership
             var user = InnerMembershipProvider.GetUser(username, false);
             string accountId = GetUserAccountId(user);
 
-            if (this.latchAPI != null && user != null && !string.IsNullOrEmpty(accountId))
+            var pairingInfo = FindPairingInfoByAccountId(accountId);
+
+            if (this.latchAPI != null && user != null && !string.IsNullOrEmpty(accountId) && pairingInfo != null)
             {
-                var unpairResponse = this.latchAPI.Unpair(accountId);
-                SetUserAccountId(user, string.Empty);
-                if (unpairResponse.Error != null)
+                if (pairingInfo.Length == 1)
                 {
-                    throw new ApplicationException(unpairResponse.Error.ToString());
+                    var unpairResponse = this.latchAPI.Unpair(accountId);
+                    if (unpairResponse.Error != null)
+                    {
+                        throw new ApplicationException(unpairResponse.Error.ToString());
+                    }
                 }
+
+                SetUserAccountId(user, string.Empty);
             }
         }
 
